@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -58,7 +58,7 @@
 
   #statsContainer {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 1em;
     padding: 1em;
     margin-top: 0.25em;
@@ -81,7 +81,7 @@
     border-color: rgba(163,255,18,0.5);
   }
   .kpi-number {
-    font-size: 1.6em;
+    font-size: 1.55em;
     font-weight: 800;
     color: var(--text-primary);
   }
@@ -100,6 +100,7 @@
     margin-top: 0.25em;
     gap: 0.5em;
     padding: 0 1em;
+    flex-wrap: wrap;
   }
   .tab {
     flex: 1;
@@ -113,6 +114,7 @@
     background: rgba(255,255,255,0.03);
     transition: 0.2s;
     text-align: center;
+    user-select: none;
   }
   .tab:hover { background: rgba(255,255,255,0.06); }
   .tab.active {
@@ -193,7 +195,7 @@
     min-width: 220px;
   }
 
-  input[type="text"], input[type="number"], input[type="datetime-local"], select, textarea {
+  input[type="text"], input[type="number"], input[type="datetime-local"], textarea {
     width: 100%;
     padding: 10px 12px;
     background-color: rgba(255,255,255,0.04);
@@ -204,7 +206,7 @@
     font-size: 1em;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  input:focus, select:focus, textarea:focus {
+  input:focus, textarea:focus {
     outline: none;
     border-color: rgba(163,255,18,0.8);
     box-shadow: 0 0 10px rgba(163,255,18,0.2);
@@ -236,18 +238,18 @@
   tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.03); }
   tbody tr:hover { background-color: rgba(255,255,255,0.06); }
 
-  .badge {
-    display:inline-block;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-weight: 800;
-    font-size: 0.82em;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
-  }
+  .profit-pos { color: var(--profit-positive); font-weight: 900; }
+  .profit-neg { color: var(--profit-negative); font-weight: 900; }
 
-  .profit-pos { color: var(--profit-positive); font-weight: 800; }
-  .profit-neg { color: var(--profit-negative); font-weight: 800; }
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+  .sortable:after {
+    content: " ⇅";
+    opacity: 0.5;
+    font-weight: 800;
+  }
 
   /* Modal */
   #overlay, #sellOverlay {
@@ -316,35 +318,79 @@
 
   .muted { color: var(--text-secondary); }
 
+  footer {
+    padding: 18px 12px;
+    margin-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    color: rgba(234,240,255,0.75);
+    text-align: center;
+    font-size: 0.9em;
+  }
+  footer a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-weight: 800;
+  }
+  footer a:hover {
+    text-decoration: underline;
+  }
+
+  .leaderboard-grid {
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 1em;
+    margin-top: 1em;
+  }
+  .lb-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px;
+    padding: 12px;
+  }
+  .lb-title {
+    font-weight: 900;
+    color: rgba(234,240,255,0.92);
+    margin-bottom: 10px;
+  }
+  .lb-row {
+    display:flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-row b { color: var(--accent-primary); }
 </style>
 </head>
 <body>
 
 <header>
   <h1>UEV Trading Tracker</h1>
-  <p>ÜV Trading – lokal gespeichert • Filter nach <b>Verkaufsdatum</b> • EA Steuer automatisch</p>
+  <p>UEV Trading • Stored locally (localStorage) • Filter by <b>Sell Date</b> • EA tax auto</p>
 </header>
 
 <div id="statsContainer"></div>
 
 <div id="tabs">
-  <div class="tab active" id="tabPortfolio">Offene Trades</div>
-  <div class="tab" id="tabHistory">Historie</div>
+  <div class="tab active" id="tabPortfolio">Open Trades</div>
+  <div class="tab" id="tabHistory">History</div>
+  <div class="tab" id="tabLeaderboard">Leaderboard</div>
 </div>
 
-<!-- Offene Trades -->
+<!-- Open Trades -->
 <div class="section active" id="sectionPortfolio">
   <div class="toolbar">
-    <button class="primary" onclick="showTradeModal()">Kauf hinzufügen</button>
-    <button class="secondary" onclick="exportData()">Backup exportieren</button>
-    <button class="secondary" onclick="document.getElementById('importFile').click()">Backup importieren</button>
+    <button class="primary" onclick="showTradeModal()">Add Buy</button>
+    <button class="secondary" onclick="exportData()">Export Backup</button>
+    <button class="secondary" onclick="document.getElementById('importFile').click()">Import Backup</button>
     <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
-    <button class="danger" onclick="resetAll()">Alles löschen</button>
+    <button class="danger" onclick="resetAll()">Delete All</button>
   </div>
 
   <div class="search-row">
     <div>
-      <input type="text" id="searchOpen" placeholder="Suche offene Trades (Spieler / Notiz / Kategorie)" oninput="renderOpenTrades()">
+      <input type="text" id="searchOpen" placeholder="Search open trades (player / note)" oninput="renderOpenTrades()">
     </div>
   </div>
 
@@ -352,12 +398,11 @@
     <table id="openTradesTable">
       <thead>
         <tr>
-          <th>Spieler</th>
-          <th>Kaufpreis</th>
-          <th>Kaufdatum</th>
-          <th>Kategorie</th>
-          <th>Notiz</th>
-          <th style="width:260px;">Aktion</th>
+          <th class="sortable" onclick="setOpenSort('player')">Player</th>
+          <th class="sortable" onclick="setOpenSort('buyPrice')">Buy Price</th>
+          <th class="sortable" onclick="setOpenSort('buyDate')">Buy Date</th>
+          <th>Note</th>
+          <th style="width:260px;">Action</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -365,23 +410,24 @@
   </div>
 </div>
 
-<!-- Historie -->
+<!-- History -->
 <div class="section" id="sectionHistory">
   <div class="toolbar">
     <span class="muted"><b>Filter (Sell Date):</b></span>
-    <button class="secondary small" onclick="filterHistory('today')">Heute</button>
-    <button class="secondary small" onclick="filterHistory('7days')">Letzte 7 Tage</button>
-    <button class="secondary small" onclick="filterHistory('thisWeek')">Diese Woche</button>
-    <button class="secondary small" onclick="filterHistory('thisMonth')">Diesen Monat</button>
-    <button class="secondary small" onclick="filterHistory('all')">Alle</button>
+    <button class="secondary small" onclick="filterHistory('today')">Today</button>
+    <button class="secondary small" onclick="filterHistory('7days')">Last 7 Days</button>
+    <button class="secondary small" onclick="filterHistory('30days')">Last 30 Days</button>
+    <button class="secondary small" onclick="filterHistory('thisWeek')">This Week</button>
+    <button class="secondary small" onclick="filterHistory('thisMonth')">This Month</button>
+    <button class="secondary small" onclick="filterHistory('all')">All</button>
 
     <button class="secondary small" onclick="sortHistory('profit')">Sort: Profit</button>
-    <button class="secondary small" onclick="sortHistory('date')">Sort: Datum</button>
+    <button class="secondary small" onclick="sortHistory('date')">Sort: Date</button>
   </div>
 
   <div class="search-row">
     <div>
-      <input type="text" id="searchHistory" placeholder="Suche Historie (Spieler / Notiz / Kategorie)" oninput="updateHistory()">
+      <input type="text" id="searchHistory" placeholder="Search history (player / note)" oninput="updateHistory()">
     </div>
   </div>
 
@@ -389,15 +435,14 @@
     <table id="historyTable">
       <thead>
         <tr>
-          <th>Spieler</th>
-          <th>Kaufpreis</th>
-          <th>Kaufdatum</th>
-          <th>Verkaufspreis</th>
-          <th>Verkaufsdatum</th>
-          <th>Netto Profit</th>
-          <th>Kategorie</th>
-          <th>Notiz</th>
-          <th style="width:120px;">Aktion</th>
+          <th>Player</th>
+          <th>Buy Price</th>
+          <th>Buy Date</th>
+          <th>Sell Price</th>
+          <th>Sell Date</th>
+          <th>Net Profit</th>
+          <th>Note</th>
+          <th style="width:120px;">Action</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -405,93 +450,117 @@
   </div>
 </div>
 
-<!-- Kauf Modal -->
-<div id="overlay">
-  <div class="modal" id="tradeModal">
-    <h3 id="tradeFormTitle">Trade hinzufügen</h3>
+<!-- Leaderboard -->
+<div class="section" id="sectionLeaderboard">
+  <div class="toolbar">
+    <span class="muted"><b>Leaderboard Range:</b></span>
+    <button class="secondary small" onclick="setLeaderboardRange('today')">Today</button>
+    <button class="secondary small" onclick="setLeaderboardRange('7days')">Last 7 Days</button>
+    <button class="secondary small" onclick="setLeaderboardRange('30days')">Last 30 Days</button>
+    <button class="secondary small" onclick="setLeaderboardRange('all')">All</button>
+  </div>
 
-    <div>
-      <label>Spielername:</label>
-      <input type="text" id="playerName" placeholder="z.B. Mbappé"/>
+  <div class="leaderboard-grid">
+    <div class="lb-card">
+      <div class="lb-title">Avg Sell Duration (fastest players)</div>
+      <div id="lbDuration"></div>
     </div>
 
-    <div class="row">
-      <div>
-        <label>Kaufpreis:</label>
-        <input type="number" id="buyPrice" step="1" placeholder="Coins"/>
-      </div>
-      <div>
-        <label>Kaufdatum / Uhrzeit:</label>
-        <input type="datetime-local" id="buyDate"/>
-      </div>
+    <div class="lb-card">
+      <div class="lb-title">Most Sold Players</div>
+      <div id="lbMostSold"></div>
     </div>
 
-    <div class="row">
-      <div>
-        <label>Kategorie:</label>
-        <select id="category">
-          <option value="ÜV">ÜV</option>
-          <option value="Sniping">Sniping</option>
-          <option value="Invest">Invest</option>
-          <option value="SBC">SBC</option>
-          <option value="Sonstiges">Sonstiges</option>
-        </select>
-      </div>
-      <div>
-        <label>Notiz:</label>
-        <input type="text" id="note" placeholder="z.B. TOTW, 84x10..." />
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="primary" onclick="saveTrade()">Speichern</button>
-      <button class="secondary" onclick="closeTradeModal()">Abbrechen</button>
+    <div class="lb-card">
+      <div class="lb-title">Most Profitable Players</div>
+      <div id="lbMostProfit"></div>
     </div>
   </div>
 </div>
 
-<!-- Verkauf Modal -->
-<div id="sellOverlay">
-  <div class="modal" id="sellModal">
-    <h3>Verkauf abschließen</h3>
+<!-- Buy Modal -->
+<div id="overlay">
+  <div class="modal" id="tradeModal">
+    <h3 id="tradeFormTitle">Add Trade</h3>
+
+    <div>
+      <label>Player name:</label>
+      <input type="text" id="playerName" placeholder="e.g. Mbappé"/>
+    </div>
 
     <div class="row">
       <div>
-        <label>Verkaufspreis:</label>
+        <label>Buy price:</label>
+        <input type="number" id="buyPrice" step="1" placeholder="Coins"/>
+      </div>
+      <div>
+        <label>Buy date / time:</label>
+        <input type="datetime-local" id="buyDate"/>
+      </div>
+    </div>
+
+    <div>
+      <label>Note:</label>
+      <input type="text" id="note" placeholder="optional"/>
+    </div>
+
+    <div class="modal-footer">
+      <button class="primary" onclick="saveTrade()">Save</button>
+      <button class="secondary" onclick="closeTradeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sell Modal -->
+<div id="sellOverlay">
+  <div class="modal" id="sellModal">
+    <h3>Complete Sale</h3>
+
+    <div class="row">
+      <div>
+        <label>Sell price:</label>
         <input type="number" id="sellPrice" step="1" oninput="updateSellCalc()" placeholder="Coins"/>
       </div>
       <div>
-        <label>Verkaufsdatum / Uhrzeit:</label>
+        <label>Sell date / time:</label>
         <input type="datetime-local" id="sellDate" onchange="updateSellCalc()"/>
       </div>
     </div>
 
     <div id="profitDisplay">
-      <div><span>Brutto Gewinn:</span> <span id="bruttoProfit">0</span></div>
-      <div><span>EA Steuer (5%):</span> <span id="eaTax">0</span></div>
-      <div><strong>Netto Profit:</strong> <span id="nettoProfit" class="profit-pos">0</span></div>
+      <div><span>Gross profit:</span> <span id="bruttoProfit">0</span></div>
+      <div><span>EA tax (5%):</span> <span id="eaTax">0</span></div>
+      <div><strong>Net profit:</strong> <span id="nettoProfit" class="profit-pos">0</span></div>
     </div>
 
     <div class="modal-footer">
-      <button class="primary" onclick="confirmSell()">Verkaufen</button>
-      <button class="secondary" onclick="closeSellModal()">Abbrechen</button>
+      <button class="primary" onclick="confirmSell()">Sell</button>
+      <button class="secondary" onclick="closeSellModal()">Cancel</button>
     </div>
   </div>
 </div>
 
+<footer>
+  <b>Imprint</b> • Made by Isaak • Discord:
+  <a href="https://discord.com/users/YOUR_DISCORD_ID" target="_blank" rel="noopener">Click here</a>
+</footer>
+
 <script>
 /* =========================
-   Daten & Storage
+   Data & Storage
 ========================= */
-const STORAGE_KEY = "uev_trading_tracker_v1";
+const STORAGE_KEY = "uev_trading_tracker_v2";
 
 let trades = { offene: [], abgeschlossen: [] };
 let currentTradeId = null;
 let currentSellTradeId = null;
 
 let filterMode = 'all';
-let sortMode = 'date'; // default
-let sortDir = 'desc';  // newest first
+let sortMode = 'date';
+
+let openSort = { key: 'buyDate', dir: 'desc' };
+
+let leaderboardRange = 'all';
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
@@ -511,7 +580,7 @@ function loadData() {
 }
 
 function resetAll() {
-  if (!confirm("Wirklich ALLE Trades löschen?")) return;
+  if (!confirm("Delete ALL trades?")) return;
   trades = { offene: [], abgeschlossen: [] };
   saveData();
   renderAll();
@@ -527,7 +596,7 @@ function uid() {
 function formatCoins(value) {
   const v = Number(value);
   if (!isFinite(v)) return "0";
-  return Math.round(v).toLocaleString("de-DE");
+  return Math.round(v).toLocaleString("en-US");
 }
 
 function formatDateTime(value) {
@@ -548,8 +617,7 @@ function includesAny(trade, query) {
   if (!q) return true;
   return (
     normalize(trade.spieler).includes(q) ||
-    normalize(trade.notiz).includes(q) ||
-    normalize(trade.kategorie).includes(q)
+    normalize(trade.notiz).includes(q)
   );
 }
 
@@ -573,9 +641,136 @@ function startOfMonth(date) {
   return d;
 }
 
+function daysBetween(a, b) {
+  const ms = Math.abs(b - a);
+  return ms / (1000 * 60 * 60 * 24);
+}
+
+function durationMs(trade) {
+  const buy = new Date(trade.kaufDatum);
+  const sell = new Date(trade.sellDate);
+  if (isNaN(buy.getTime()) || isNaN(sell.getTime())) return null;
+  return sell - buy;
+}
+
+function inRangeBySellDate(trade, range) {
+  const now = new Date();
+  const d = new Date(trade.sellDate);
+  if (isNaN(d.getTime())) return false;
+
+  if (range === 'all') return true;
+  if (range === 'today') return isSameDay(d, now);
+
+  if (range === '7days') {
+    const start = new Date(now);
+    start.setDate(start.getDate() - 7);
+    return d >= start && d <= now;
+  }
+
+  if (range === '30days') {
+    const start = new Date(now);
+    start.setDate(start.getDate() - 30);
+    return d >= start && d <= now;
+  }
+
+  return true;
+}
+
 /* =========================
    KPI Dashboard
 ========================= */
+function computeMostSoldPlayer(list) {
+  const map = {};
+  list.forEach(t => {
+    const name = t.spieler || "Unknown";
+    map[name] = (map[name] || 0) + 1;
+  });
+  let best = null;
+  Object.keys(map).forEach(name => {
+    if (!best || map[name] > best.count) best = { name, count: map[name] };
+  });
+  return best;
+}
+
+function computeFastestSeller(list) {
+  // avg duration by player
+  const map = {};
+  list.forEach(t => {
+    const ms = durationMs(t);
+    if (ms === null || ms < 0) return;
+    const name = t.spieler || "Unknown";
+    if (!map[name]) map[name] = { total: 0, n: 0 };
+    map[name].total += ms;
+    map[name].n += 1;
+  });
+
+  let best = null;
+  Object.keys(map).forEach(name => {
+    const avg = map[name].total / map[name].n;
+    if (!best || avg < best.avgMs) best = { name, avgMs: avg, n: map[name].n };
+  });
+
+  return best;
+}
+
+function computeOldestOpenTrade(openList) {
+  if (!openList.length) return null;
+  let oldest = openList[0];
+  openList.forEach(t => {
+    if (new Date(t.kaufDatum) < new Date(oldest.kaufDatum)) oldest = t;
+  });
+  return oldest;
+}
+
+function computeTodayProfit() {
+  const now = new Date();
+  return trades.abgeschlossen
+    .filter(t => isSameDay(new Date(t.sellDate), now))
+    .reduce((sum,t)=> sum + (Number(t.nettoProfit)||0), 0);
+}
+
+function computeThisWeekProfit() {
+  const now = new Date();
+  const start = startOfWeek(now);
+  return trades.abgeschlossen
+    .filter(t => {
+      const d = new Date(t.sellDate);
+      return d >= start && d <= now;
+    })
+    .reduce((sum,t)=> sum + (Number(t.nettoProfit)||0), 0);
+}
+
+function computeDailyAverageProfit() {
+  // average profit per day based on days with at least 1 closed trade
+  const map = {};
+  trades.abgeschlossen.forEach(t => {
+    const d = new Date(t.sellDate);
+    if (isNaN(d.getTime())) return;
+    const key = d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+    map[key] = (map[key] || 0) + (Number(t.nettoProfit)||0);
+  });
+  const keys = Object.keys(map);
+  if (!keys.length) return 0;
+  const total = keys.reduce((s,k)=> s + map[k], 0);
+  return total / keys.length;
+}
+
+function computeWeeklyAverageProfit() {
+  // average profit per week (weeks with at least 1 closed trade)
+  const map = {};
+  trades.abgeschlossen.forEach(t => {
+    const d = new Date(t.sellDate);
+    if (isNaN(d.getTime())) return;
+    const weekStart = startOfWeek(d);
+    const key = weekStart.getFullYear()+"-"+(weekStart.getMonth()+1)+"-"+weekStart.getDate();
+    map[key] = (map[key] || 0) + (Number(t.nettoProfit)||0);
+  });
+  const keys = Object.keys(map);
+  if (!keys.length) return 0;
+  const total = keys.reduce((s,k)=> s + map[k], 0);
+  return total / keys.length;
+}
+
 function renderStats() {
   const offene = trades.offene;
   const abgeschlossen = trades.abgeschlossen;
@@ -583,74 +778,111 @@ function renderStats() {
   const offeneCount = offene.length;
   const closedCount = abgeschlossen.length;
 
-  const gebunden = offene.reduce((sum,t)=> sum + (Number(t.kaufpreis)||0), 0);
+  const boundValue = offene.reduce((sum,t)=> sum + (Number(t.kaufpreis)||0), 0);
 
   const totalProfit = abgeschlossen.reduce((sum,t)=> sum + (Number(t.nettoProfit)||0), 0);
   const avgProfit = closedCount ? totalProfit / closedCount : 0;
 
-  const wins = abgeschlossen.filter(t => (Number(t.nettoProfit)||0) > 0).length;
-  const winrate = closedCount ? (wins/closedCount)*100 : 0;
+  const todayProfit = computeTodayProfit();
+  const dailyAvg = computeDailyAverageProfit();
 
-  const bestTrade = abgeschlossen.reduce((best, t) => {
-    const p = Number(t.nettoProfit)||0;
-    if (!best || p > (Number(best.nettoProfit)||0)) return t;
-    return best;
-  }, null);
+  const thisWeekProfit = computeThisWeekProfit();
+  const weeklyAvg = computeWeeklyAverageProfit();
 
-  const worstTrade = abgeschlossen.reduce((worst, t) => {
-    const p = Number(t.nettoProfit)||0;
-    if (!worst || p < (Number(worst.nettoProfit)||0)) return t;
-    return worst;
-  }, null);
+  const mostSold = computeMostSoldPlayer(abgeschlossen);
+  const oldestOpen = computeOldestOpenTrade(offene);
+  const fastest = computeFastestSeller(abgeschlossen);
 
   document.querySelector('#statsContainer').innerHTML = `
     <div class="kpi-card">
       <div class="kpi-number">${offeneCount}</div>
-      <div class="kpi-label">Offene Trades</div>
-      <div class="kpi-sub">Gebunden: <b>${formatCoins(gebunden)}</b></div>
+      <div class="kpi-label">Open trades</div>
+      <div class="kpi-sub">Bound coins: <b>${formatCoins(boundValue)}</b></div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-number">${closedCount}</div>
-      <div class="kpi-label">Abgeschlossen</div>
-      <div class="kpi-sub">Winrate: <b>${winrate.toFixed(1)}%</b></div>
+      <div class="kpi-label">Closed trades</div>
+      <div class="kpi-sub">Avg / trade: <b>${formatCoins(avgProfit)}</b></div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-number ${totalProfit>=0?'profit-pos':'profit-neg'}">${formatCoins(totalProfit)}</div>
-      <div class="kpi-label">Gesamt Profit</div>
-      <div class="kpi-sub">Ø/Trade: <b>${formatCoins(avgProfit)}</b></div>
+      <div class="kpi-label">Total net profit</div>
+      <div class="kpi-sub">Daily avg: <b>${formatCoins(dailyAvg)}</b></div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-number ${bestTrade && bestTrade.nettoProfit>=0?'profit-pos':'profit-neg'}">${bestTrade?formatCoins(bestTrade.nettoProfit):'—'}</div>
-      <div class="kpi-label">Best Trade</div>
-      <div class="kpi-sub">${bestTrade?bestTrade.spieler:'Keine Daten'}</div>
+      <div class="kpi-number ${todayProfit>=0?'profit-pos':'profit-neg'}">${formatCoins(todayProfit)}</div>
+      <div class="kpi-label">Profit today</div>
+      <div class="kpi-sub">Daily avg: <b>${formatCoins(dailyAvg)}</b></div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-number ${worstTrade && worstTrade.nettoProfit>=0?'profit-pos':'profit-neg'}">${worstTrade?formatCoins(worstTrade.nettoProfit):'—'}</div>
-      <div class="kpi-label">Worst Trade</div>
-      <div class="kpi-sub">${worstTrade?worstTrade.spieler:'Keine Daten'}</div>
+      <div class="kpi-number ${thisWeekProfit>=0?'profit-pos':'profit-neg'}">${formatCoins(thisWeekProfit)}</div>
+      <div class="kpi-label">Profit this week</div>
+      <div class="kpi-sub">Weekly avg: <b>${formatCoins(weeklyAvg)}</b></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-number">${mostSold ? mostSold.count : "—"}</div>
+      <div class="kpi-label">Most sold player</div>
+      <div class="kpi-sub">${mostSold ? `<b>${mostSold.name}</b>` : "No data"}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-number">${oldestOpen ? Math.floor(daysBetween(new Date(oldestOpen.kaufDatum), new Date())) + "d" : "—"}</div>
+      <div class="kpi-label">Oldest open trade</div>
+      <div class="kpi-sub">${oldestOpen ? `<b>${oldestOpen.spieler}</b>` : "No open trades"}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-number">${fastest ? Math.max(0, Math.round(fastest.avgMs / (1000*60*60))) + "h" : "—"}</div>
+      <div class="kpi-label">Fastest selling (avg)</div>
+      <div class="kpi-sub">${fastest ? `<b>${fastest.name}</b> (${fastest.n} sales)` : "No data"}</div>
     </div>
   `;
 }
 
 /* =========================
-   Render Open Trades
+   Open Trades (sortable)
 ========================= */
+function setOpenSort(key) {
+  if (openSort.key === key) {
+    openSort.dir = openSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    openSort.key = key;
+    openSort.dir = 'asc';
+  }
+  renderOpenTrades();
+}
+
+function sortOpen(list) {
+  const dir = openSort.dir === 'asc' ? 1 : -1;
+
+  return list.sort((a,b) => {
+    if (openSort.key === 'player') {
+      return normalize(a.spieler).localeCompare(normalize(b.spieler)) * dir;
+    }
+    if (openSort.key === 'buyPrice') {
+      return ((Number(a.kaufpreis)||0) - (Number(b.kaufpreis)||0)) * dir;
+    }
+    // buyDate
+    return (new Date(a.kaufDatum) - new Date(b.kaufDatum)) * dir;
+  });
+}
+
 function renderOpenTrades() {
   const tbody = document.querySelector('#openTradesTable tbody');
   const q = document.getElementById("searchOpen").value;
 
-  const list = trades.offene
-    .filter(t => includesAny(t, q))
-    .sort((a,b)=> new Date(b.kaufDatum) - new Date(a.kaufDatum));
+  let list = trades.offene.filter(t => includesAny(t, q));
+  list = sortOpen(list);
 
   tbody.innerHTML = '';
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="muted">Keine offenen Trades gefunden.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">No open trades found.</td></tr>`;
     return;
   }
 
@@ -661,12 +893,11 @@ function renderOpenTrades() {
       <td><b>${trade.spieler}</b></td>
       <td>${formatCoins(trade.kaufpreis)}</td>
       <td>${formatDateTime(trade.kaufDatum)}</td>
-      <td><span class="badge">${trade.kategorie}</span></td>
       <td>${trade.notiz || ''}</td>
       <td>
-        <button class="secondary small" onclick="showSellModal('${trade.id}')">Verkaufen</button>
-        <button class="secondary small" onclick="editTrade('${trade.id}')">Bearbeiten</button>
-        <button class="danger small" onclick="deleteTrade('${trade.id}')">Löschen</button>
+        <button class="secondary small" onclick="showSellModal('${trade.id}')">Sell</button>
+        <button class="secondary small" onclick="editTrade('${trade.id}')">Edit</button>
+        <button class="danger small" onclick="deleteTrade('${trade.id}')">Delete</button>
       </td>
     `;
 
@@ -675,7 +906,7 @@ function renderOpenTrades() {
 }
 
 /* =========================
-   Historie Filter/Sort/Search
+   History Filter/Sort/Search
 ========================= */
 function getFilteredHistory() {
   const q = document.getElementById("searchHistory").value;
@@ -691,9 +922,15 @@ function getFilteredHistory() {
     if (filterMode === 'today') return isSameDay(d, now);
 
     if (filterMode === '7days') {
-      const seven = new Date(now);
-      seven.setDate(seven.getDate() - 7);
-      return d >= seven && d <= now;
+      const start = new Date(now);
+      start.setDate(start.getDate() - 7);
+      return d >= start && d <= now;
+    }
+
+    if (filterMode === '30days') {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 30);
+      return d >= start && d <= now;
     }
 
     if (filterMode === 'thisWeek') {
@@ -709,11 +946,9 @@ function getFilteredHistory() {
     return true;
   });
 
-  // Sort
   if (sortMode === 'profit') {
     list.sort((a,b)=> (Number(b.nettoProfit)||0) - (Number(a.nettoProfit)||0));
   } else {
-    // date
     list.sort((a,b)=> new Date(b.sellDate) - new Date(a.sellDate));
   }
 
@@ -727,7 +962,7 @@ function renderHistory() {
   tbody.innerHTML = '';
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="muted">Keine Trades in der Historie (mit aktuellem Filter).</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="muted">No trades in history (current filter).</td></tr>`;
     return;
   }
 
@@ -743,7 +978,6 @@ function renderHistory() {
       <td>${formatCoins(trade.sellPrice)}</td>
       <td>${formatDateTime(trade.sellDate)}</td>
       <td class="${profitClass}">${formatCoins(p)}</td>
-      <td><span class="badge">${trade.kategorie}</span></td>
       <td>${trade.notiz || ''}</td>
       <td>
         <button class="secondary small" onclick="reopenTrade('${trade.id}')">Reopen</button>
@@ -757,6 +991,7 @@ function filterHistory(mode) {
   filterMode = mode;
   renderHistory();
   renderStats();
+  renderLeaderboard();
 }
 
 function sortHistory(mode) {
@@ -769,14 +1004,86 @@ function updateHistory() {
 }
 
 /* =========================
-   Trade Modal (Buy)
+   Leaderboard
+========================= */
+function setLeaderboardRange(range) {
+  leaderboardRange = range;
+  renderLeaderboard();
+}
+
+function groupByPlayer(list) {
+  const map = {};
+  list.forEach(t => {
+    const name = t.spieler || "Unknown";
+    if (!map[name]) map[name] = [];
+    map[name].push(t);
+  });
+  return map;
+}
+
+function renderLeaderboard() {
+  const list = trades.abgeschlossen.filter(t => inRangeBySellDate(t, leaderboardRange));
+  const byPlayer = groupByPlayer(list);
+
+  // Avg duration
+  const durationArr = Object.keys(byPlayer).map(name => {
+    const tradesList = byPlayer[name];
+    const durations = tradesList
+      .map(t => durationMs(t))
+      .filter(ms => ms !== null && ms >= 0);
+
+    if (!durations.length) return null;
+    const avg = durations.reduce((a,b)=>a+b,0) / durations.length;
+    return { name, avgMs: avg, n: durations.length };
+  }).filter(Boolean).sort((a,b)=> a.avgMs - b.avgMs).slice(0, 10);
+
+  // Most sold
+  const mostSoldArr = Object.keys(byPlayer).map(name => ({
+    name,
+    count: byPlayer[name].length
+  })).sort((a,b)=> b.count - a.count).slice(0, 10);
+
+  // Most profit
+  const mostProfitArr = Object.keys(byPlayer).map(name => ({
+    name,
+    profit: byPlayer[name].reduce((s,t)=> s + (Number(t.nettoProfit)||0), 0),
+    count: byPlayer[name].length
+  })).sort((a,b)=> b.profit - a.profit).slice(0, 10);
+
+  const durEl = document.getElementById("lbDuration");
+  const soldEl = document.getElementById("lbMostSold");
+  const profEl = document.getElementById("lbMostProfit");
+
+  durEl.innerHTML = durationArr.length ? durationArr.map((x,i)=> `
+    <div class="lb-row">
+      <span>#${i+1} <b>${x.name}</b></span>
+      <span>${Math.round(x.avgMs/(1000*60*60))}h avg (${x.n})</span>
+    </div>
+  `).join("") : `<div class="muted">No data.</div>`;
+
+  soldEl.innerHTML = mostSoldArr.length ? mostSoldArr.map((x,i)=> `
+    <div class="lb-row">
+      <span>#${i+1} <b>${x.name}</b></span>
+      <span>${x.count} sales</span>
+    </div>
+  `).join("") : `<div class="muted">No data.</div>`;
+
+  profEl.innerHTML = mostProfitArr.length ? mostProfitArr.map((x,i)=> `
+    <div class="lb-row">
+      <span>#${i+1} <b>${x.name}</b></span>
+      <span class="${x.profit>=0?'profit-pos':'profit-neg'}">${formatCoins(x.profit)}</span>
+    </div>
+  `).join("") : `<div class="muted">No data.</div>`;
+}
+
+/* =========================
+   Buy Modal
 ========================= */
 function showTradeModal() {
-  document.getElementById('tradeFormTitle').textContent='Trade hinzufügen';
+  document.getElementById('tradeFormTitle').textContent='Add Trade';
   document.getElementById('playerName').value='';
   document.getElementById('buyPrice').value='';
   document.getElementById('buyDate').value=new Date().toISOString().slice(0,16);
-  document.getElementById('category').value='ÜV';
   document.getElementById('note').value='';
   currentTradeId=null;
   document.getElementById('overlay').style.display='flex';
@@ -790,11 +1097,10 @@ function saveTrade() {
   const player = document.getElementById('playerName').value.trim();
   const buyPrice = parseFloat(document.getElementById('buyPrice').value);
   const buyDatum = document.getElementById('buyDate').value;
-  const kat = document.getElementById('category').value;
   const notiz = document.getElementById('note').value;
 
   if (!player || isNaN(buyPrice) || !buyDatum) {
-    alert('Bitte Spieler, Kaufpreis und Kaufdatum ausfüllen.');
+    alert('Please fill player, buy price and buy date.');
     return;
   }
 
@@ -806,7 +1112,6 @@ function saveTrade() {
         spieler: player,
         kaufpreis: buyPrice,
         kaufDatum: buyDatum,
-        kategorie: kat,
         notiz: notiz
       };
     }
@@ -816,7 +1121,6 @@ function saveTrade() {
       spieler: player,
       kaufpreis: buyPrice,
       kaufDatum: buyDatum,
-      kategorie: kat,
       notiz: notiz
     });
   }
@@ -833,16 +1137,15 @@ function editTrade(id) {
   document.getElementById('playerName').value = t.spieler;
   document.getElementById('buyPrice').value = t.kaufpreis;
   document.getElementById('buyDate').value = t.kaufDatum;
-  document.getElementById('category').value = t.kategorie;
   document.getElementById('note').value = t.notiz || '';
   currentTradeId = t.id;
 
-  document.getElementById('tradeFormTitle').textContent='Trade bearbeiten';
+  document.getElementById('tradeFormTitle').textContent='Edit Trade';
   document.getElementById('overlay').style.display='flex';
 }
 
 function deleteTrade(id) {
-  if (!confirm('Trade wirklich löschen?')) return;
+  if (!confirm('Delete this trade?')) return;
   trades.offene = trades.offene.filter(t => t.id !== id);
   saveData();
   renderAll();
@@ -878,7 +1181,7 @@ function updateSellCalc() {
 
   const buyPrice = Number(trade.kaufpreis)||0;
   const brutto = sellPrice - buyPrice;
-  const eaTax = sellPrice * 0.05; // EA tax ist 5% vom Verkaufspreis
+  const eaTax = sellPrice * 0.05;
   const netto = brutto - eaTax;
 
   document.getElementById('bruttoProfit').textContent = formatCoins(brutto);
@@ -895,7 +1198,7 @@ function confirmSell() {
   const sellDate = document.getElementById('sellDate').value;
 
   if (!trade || isNaN(sellPrice) || !sellDate) {
-    alert('Bitte Verkaufspreis und Verkaufsdatum ausfüllen.');
+    alert('Please fill sell price and sell date.');
     return;
   }
 
@@ -927,7 +1230,7 @@ function confirmSell() {
 function reopenTrade(id) {
   const t = trades.abgeschlossen.find(x => x.id === id);
   if (!t) return;
-  if (!confirm("Trade wirklich wieder öffnen?")) return;
+  if (!confirm("Reopen this trade?")) return;
 
   trades.abgeschlossen = trades.abgeschlossen.filter(x => x.id !== id);
 
@@ -967,15 +1270,15 @@ function importData(e) {
     try {
       const data = JSON.parse(reader.result);
       if (!data || !Array.isArray(data.offene) || !Array.isArray(data.abgeschlossen)) {
-        alert('Ungültige Datei (falsches Format).');
+        alert('Invalid file format.');
         return;
       }
       trades = data;
       saveData();
       renderAll();
-      alert("Backup importiert!");
+      alert("Backup imported!");
     } catch (err) {
-      alert('Fehler beim Import.');
+      alert('Import failed.');
     }
   };
   reader.readAsText(file);
@@ -992,8 +1295,10 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     if (tab.id === 'tabPortfolio') {
       document.getElementById('sectionPortfolio').classList.add('active');
-    } else {
+    } else if (tab.id === 'tabHistory') {
       document.getElementById('sectionHistory').classList.add('active');
+    } else {
+      document.getElementById('sectionLeaderboard').classList.add('active');
     }
   };
 });
@@ -1005,6 +1310,7 @@ function renderAll() {
   renderStats();
   renderOpenTrades();
   renderHistory();
+  renderLeaderboard();
 }
 
 /* =========================
@@ -1015,7 +1321,7 @@ window.onload = () => {
   renderAll();
 };
 
-// ESC schließt Modals
+// ESC closes modals
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeTradeModal();
