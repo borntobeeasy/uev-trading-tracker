@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UEV Trading Tracker</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --background: #0E1116;
+    --card-bg: #151C2C;
+    --card-bg-2: #101826;
+    --text-primary: #EAF0FF;
+    --text-secondary: #A7B0C0;
+    --accent-primary: #A3FF12;
+    --accent-gold: #FFD54A;
+    --profit-positive: #9DFF00;
+    --profit-negative: #FF4D4D;
+    --border-color: rgba(255,255,255,0.06);
+    --shadow-color: rgba(0,255,0,0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+    background-color: var(--background);
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+
+  header {
+    padding: 1em;
+    background: linear-gradient(135deg, #0B0F14, #1C2029);
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.8em;
+    color: var(--accent-primary);
+    font-weight: 800;
+    letter-spacing: 0.3px;
+  }
+  header p {
+    margin: 6px 0 0 0;
+    color: var(--text-secondary);
+    font-size: 0.95em;
+  }
+
+  #statsContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1em;
+    padding: 1em;
+    margin-top: 0.25em;
+  }
+
+  .kpi-card {
+    background: linear-gradient(135deg, #151C2C, #0F1522);
+    padding: 14px 14px;
+    border-radius: 18px;
+    box-shadow: 0 0 12px rgba(0,255,0,0.12);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 100px;
+    transition: 0.2s;
+  }
+  .kpi-card:hover {
+    box-shadow: 0 0 18px var(--shadow-color);
+    border-color: rgba(163,255,18,0.5);
+  }
+  .kpi-number {
+    font-size: 1.6em;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .kpi-label {
+    font-size: 0.78em;
+    color: var(--text-secondary);
+  }
+  .kpi-sub {
+    font-size: 0.78em;
+    color: rgba(234,240,255,0.85);
+  }
+
+  #tabs {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.25em;
+    gap: 0.5em;
+    padding: 0 1em;
+  }
+  .tab {
+    flex: 1;
+    max-width: 280px;
+    padding: 0.7em 1em;
+    cursor: pointer;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1em;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.03);
+    transition: 0.2s;
+    text-align: center;
+  }
+  .tab:hover { background: rgba(255,255,255,0.06); }
+  .tab.active {
+    border-color: rgba(163,255,18,0.5);
+    background: rgba(163,255,18,0.08);
+    color: var(--accent-primary);
+    box-shadow: 0 0 14px rgba(163,255,18,0.12);
+  }
+
+  .section {
+    display: none;
+    padding: 1em;
+  }
+  .section.active { display: block; }
+
+  .toolbar {
+    margin-top: 0.5em;
+    display:flex;
+    gap: 0.7em;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  button {
+    min-height: 44px;
+    padding: 0 1em;
+    font-size: 1em;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 800;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  button.primary {
+    background-color: var(--accent-primary);
+    color: #000;
+  }
+  button.primary:hover {
+    box-shadow: 0 0 14px var(--shadow-color);
+    transform: translateY(-1px);
+  }
+  button.secondary {
+    background: transparent;
+    border: 2px solid rgba(163,255,18,0.6);
+    color: var(--accent-primary);
+  }
+  button.secondary:hover {
+    box-shadow: 0 0 10px var(--shadow-color);
+    background: rgba(255,255,255,0.04);
+    transform: translateY(-1px);
+  }
+  button.danger {
+    border: 2px solid rgba(255,77,77,0.8);
+    background: transparent;
+    color: var(--profit-negative);
+  }
+  button.danger:hover {
+    box-shadow: 0 0 12px rgba(255,0,0,0.35);
+    background: rgba(255,77,77,0.08);
+  }
+  button.small {
+    min-height: 36px;
+    padding: 0 0.8em;
+    font-size: 0.9em;
+    border-radius: 14px;
+  }
+
+  .search-row {
+    margin-top: 0.7em;
+    display:flex;
+    gap: 0.7em;
+    flex-wrap: wrap;
+    align-items:center;
+  }
+  .search-row > div {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  input[type="text"], input[type="number"], input[type="datetime-local"], select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    color: #EAF0FF;
+    font-family: 'Inter', sans-serif;
+    font-size: 1em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: rgba(163,255,18,0.8);
+    box-shadow: 0 0 10px rgba(163,255,18,0.2);
+  }
+
+  .table-wrap {
+    margin-top: 1em;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+    background: rgba(255,255,255,0.02);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead {
+    background: linear-gradient(135deg, #222, #1A1F28);
+  }
+  th, td {
+    padding: 0.7em;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+    font-size: 0.95em;
+    vertical-align: middle;
+  }
+  th { color: rgba(234,240,255,0.9); font-weight: 800; }
+  tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.03); }
+  tbody tr:hover { background-color: rgba(255,255,255,0.06); }
+
+  .badge {
+    display:inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.82em;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .profit-pos { color: var(--profit-positive); font-weight: 800; }
+  .profit-neg { color: var(--profit-negative); font-weight: 800; }
+
+  /* Modal */
+  #overlay, #sellOverlay {
+    display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.65);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal {
+    background: linear-gradient(135deg, #151C2C, #0F1522);
+    padding: 1em;
+    border-radius: 20px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 0 22px rgba(0,255,0,0.25);
+    border: 1px solid rgba(163,255,18,0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9em;
+  }
+  .modal h3 {
+    margin: 0;
+    text-align: center;
+    color: var(--accent-primary);
+    font-weight: 900;
+  }
+  .modal .row {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8em;
+  }
+  @media (max-width: 520px) {
+    .modal .row { grid-template-columns: 1fr; }
+  }
+
+  .modal-footer {
+    display:flex;
+    justify-content:center;
+    gap: 0.8em;
+    margin-top: 0.4em;
+    flex-wrap: wrap;
+  }
+
+  #profitDisplay {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 12px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+  }
+  #profitDisplay div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  #nettoProfit {
+    font-weight: 900;
+    font-size: 1.15em;
+  }
+
+  .muted { color: var(--text-secondary); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>UEV Trading Tracker</h1>
+  <p>ÜV Trading – lokal gespeichert • Filter nach <b>Verkaufsdatum</b> • EA Steuer automatisch</p>
+</header>
+
+<div id="statsContainer"></div>
+
+<div id="tabs">
+  <div class="tab active" id="tabPortfolio">Offene Trades</div>
+  <div class="tab" id="tabHistory">Historie</div>
+</div>
+
+<!-- Offene Trades -->
+<div class="section active" id="sectionPortfolio">
+  <div class="toolbar">
+    <button class="primary" onclick="showTradeModal()">Kauf hinzufügen</button>
+    <button class="secondary" onclick="exportData()">Backup exportieren</button>
+    <button class="secondary" onclick="document.getElementById('importFile').click()">Backup importieren</button>
+    <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+    <button class="danger" onclick="resetAll()">Alles löschen</button>
+  </div>
+
+  <div class="search-row">
+    <div>
+      <input type="text" id="searchOpen" placeholder="Suche offene Trades (Spieler / Notiz / Kategorie)" oninput="renderOpenTrades()">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="openTradesTable">
+      <thead>
+        <tr>
+          <th>Spieler</th>
+          <th>Kaufpreis</th>
+          <th>Kaufdatum</th>
+          <th>Kategorie</th>
+          <th>Notiz</th>
+          <th style="width:260px;">Aktion</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Historie -->
+<div class="section" id="sectionHistory">
+  <div class="toolbar">
+    <span class="muted"><b>Filter (Sell Date):</b></span>
+    <button class="secondary small" onclick="filterHistory('today')">Heute</button>
+    <button class="secondary small" onclick="filterHistory('7days')">Letzte 7 Tage</button>
+    <button class="secondary small" onclick="filterHistory('thisWeek')">Diese Woche</button>
+    <button class="secondary small" onclick="filterHistory('thisMonth')">Diesen Monat</button>
+    <button class="secondary small" onclick="filterHistory('all')">Alle</button>
+
+    <button class="secondary small" onclick="sortHistory('profit')">Sort: Profit</button>
+    <button class="secondary small" onclick="sortHistory('date')">Sort: Datum</button>
+  </div>
+
+  <div class="search-row">
+    <div>
+      <input type="text" id="searchHistory" placeholder="Suche Historie (Spieler / Notiz / Kategorie)" oninput="updateHistory()">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="historyTable">
+      <thead>
+        <tr>
+          <th>Spieler</th>
+          <th>Kaufpreis</th>
+          <th>Kaufdatum</th>
+          <th>Verkaufspreis</th>
+          <th>Verkaufsdatum</th>
+          <th>Netto Profit</th>
+          <th>Kategorie</th>
+          <th>Notiz</th>
+          <th style="width:120px;">Aktion</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Kauf Modal -->
+<div id="overlay">
+  <div class="modal" id="tradeModal">
+    <h3 id="tradeFormTitle">Trade hinzufügen</h3>
+
+    <div>
+      <label>Spielername:</label>
+      <input type="text" id="playerName" placeholder="z.B. Mbappé"/>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Kaufpreis:</label>
+        <input type="number" id="buyPrice" step="1" placeholder="Coins"/>
+      </div>
+      <div>
+        <label>Kaufdatum / Uhrzeit:</label>
+        <input type="datetime-local" id="buyDate"/>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Kategorie:</label>
+        <select id="category">
+          <option value="ÜV">ÜV</option>
+          <option value="Sniping">Sniping</option>
+          <option value="Invest">Invest</option>
+          <option value="SBC">SBC</option>
+          <option value="Sonstiges">Sonstiges</option>
+        </select>
+      </div>
+      <div>
+        <label>Notiz:</label>
+        <input type="text" id="note" placeholder="z.B. TOTW, 84x10..." />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="primary" onclick="saveTrade()">Speichern</button>
+      <button class="secondary" onclick="closeTradeModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Verkauf Modal -->
+<div id="sellOverlay">
+  <div class="modal" id="sellModal">
+    <h3>Verkauf abschließen</h3>
+
+    <div class="row">
+      <div>
+        <label>Verkaufspreis:</label>
+        <input type="number" id="sellPrice" step="1" oninput="updateSellCalc()" placeholder="Coins"/>
+      </div>
+      <div>
+        <label>Verkaufsdatum / Uhrzeit:</label>
+        <input type="datetime-local" id="sellDate" onchange="updateSellCalc()"/>
+      </div>
+    </div>
+
+    <div id="profitDisplay">
+      <div><span>Brutto Gewinn:</span> <span id="bruttoProfit">0</span></div>
+      <div><span>EA Steuer (5%):</span> <span id="eaTax">0</span></div>
+      <div><strong>Netto Profit:</strong> <span id="nettoProfit" class="profit-pos">0</span></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="primary" onclick="confirmSell()">Verkaufen</button>
+      <button class="secondary" onclick="closeSellModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Daten & Storage
+========================= */
+const STORAGE_KEY = "uev_trading_tracker_v1";
+
+let trades = { offene: [], abgeschlossen: [] };
+let currentTradeId = null;
+let currentSellTradeId = null;
+
+let filterMode = 'all';
+let sortMode = 'date'; // default
+let sortDir = 'desc';  // newest first
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.offene) && Array.isArray(parsed.abgeschlossen)) {
+      trades = parsed;
+    }
+  } catch (e) {
+    console.warn("Load failed", e);
+  }
+}
+
+function resetAll() {
+  if (!confirm("Wirklich ALLE Trades löschen?")) return;
+  trades = { offene: [], abgeschlossen: [] };
+  saveData();
+  renderAll();
+}
+
+/* =========================
+   Helpers
+========================= */
+function uid() {
+  return (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random());
+}
+
+function formatCoins(value) {
+  const v = Number(value);
+  if (!isFinite(v)) return "0";
+  return Math.round(v).toLocaleString("de-DE");
+}
+
+function formatDateTime(value) {
+  if (!value) return "";
+  try {
+    return new Date(value).toLocaleString();
+  } catch {
+    return value;
+  }
+}
+
+function normalize(str) {
+  return (str || "").toString().toLowerCase().trim();
+}
+
+function includesAny(trade, query) {
+  const q = normalize(query);
+  if (!q) return true;
+  return (
+    normalize(trade.spieler).includes(q) ||
+    normalize(trade.notiz).includes(q) ||
+    normalize(trade.kategorie).includes(q)
+  );
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+function startOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 sunday
+  const diff = (day === 0 ? -6 : 1 - day); // monday start
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function startOfMonth(date) {
+  const d = new Date(date);
+  d.setDate(1);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+/* =========================
+   KPI Dashboard
+========================= */
+function renderStats() {
+  const offene = trades.offene;
+  const abgeschlossen = trades.abgeschlossen;
+
+  const offeneCount = offene.length;
+  const closedCount = abgeschlossen.length;
+
+  const gebunden = offene.reduce((sum,t)=> sum + (Number(t.kaufpreis)||0), 0);
+
+  const totalProfit = abgeschlossen.reduce((sum,t)=> sum + (Number(t.nettoProfit)||0), 0);
+  const avgProfit = closedCount ? totalProfit / closedCount : 0;
+
+  const wins = abgeschlossen.filter(t => (Number(t.nettoProfit)||0) > 0).length;
+  const winrate = closedCount ? (wins/closedCount)*100 : 0;
+
+  const bestTrade = abgeschlossen.reduce((best, t) => {
+    const p = Number(t.nettoProfit)||0;
+    if (!best || p > (Number(best.nettoProfit)||0)) return t;
+    return best;
+  }, null);
+
+  const worstTrade = abgeschlossen.reduce((worst, t) => {
+    const p = Number(t.nettoProfit)||0;
+    if (!worst || p < (Number(worst.nettoProfit)||0)) return t;
+    return worst;
+  }, null);
+
+  document.querySelector('#statsContainer').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-number">${offeneCount}</div>
+      <div class="kpi-label">Offene Trades</div>
+      <div class="kpi-sub">Gebunden: <b>${formatCoins(gebunden)}</b></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-number">${closedCount}</div>
+      <div class="kpi-label">Abgeschlossen</div>
+      <div class="kpi-sub">Winrate: <b>${winrate.toFixed(1)}%</b></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-number ${totalProfit>=0?'profit-pos':'profit-neg'}">${formatCoins(totalProfit)}</div>
+      <div class="kpi-label">Gesamt Profit</div>
+      <div class="kpi-sub">Ø/Trade: <b>${formatCoins(avgProfit)}</b></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-number ${bestTrade && bestTrade.nettoProfit>=0?'profit-pos':'profit-neg'}">${bestTrade?formatCoins(bestTrade.nettoProfit):'—'}</div>
+      <div class="kpi-label">Best Trade</div>
+      <div class="kpi-sub">${bestTrade?bestTrade.spieler:'Keine Daten'}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-number ${worstTrade && worstTrade.nettoProfit>=0?'profit-pos':'profit-neg'}">${worstTrade?formatCoins(worstTrade.nettoProfit):'—'}</div>
+      <div class="kpi-label">Worst Trade</div>
+      <div class="kpi-sub">${worstTrade?worstTrade.spieler:'Keine Daten'}</div>
+    </div>
+  `;
+}
+
+/* =========================
+   Render Open Trades
+========================= */
+function renderOpenTrades() {
+  const tbody = document.querySelector('#openTradesTable tbody');
+  const q = document.getElementById("searchOpen").value;
+
+  const list = trades.offene
+    .filter(t => includesAny(t, q))
+    .sort((a,b)=> new Date(b.kaufDatum) - new Date(a.kaufDatum));
+
+  tbody.innerHTML = '';
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="muted">Keine offenen Trades gefunden.</td></tr>`;
+    return;
+  }
+
+  list.forEach(trade => {
+    const tr = document.createElement('tr');
+
+    tr.innerHTML = `
+      <td><b>${trade.spieler}</b></td>
+      <td>${formatCoins(trade.kaufpreis)}</td>
+      <td>${formatDateTime(trade.kaufDatum)}</td>
+      <td><span class="badge">${trade.kategorie}</span></td>
+      <td>${trade.notiz || ''}</td>
+      <td>
+        <button class="secondary small" onclick="showSellModal('${trade.id}')">Verkaufen</button>
+        <button class="secondary small" onclick="editTrade('${trade.id}')">Bearbeiten</button>
+        <button class="danger small" onclick="deleteTrade('${trade.id}')">Löschen</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================
+   Historie Filter/Sort/Search
+========================= */
+function getFilteredHistory() {
+  const q = document.getElementById("searchHistory").value;
+  let list = trades.abgeschlossen.filter(t => includesAny(t, q));
+
+  const now = new Date();
+
+  list = list.filter(t => {
+    const d = new Date(t.sellDate);
+    if (isNaN(d.getTime())) return false;
+
+    if (filterMode === 'all') return true;
+    if (filterMode === 'today') return isSameDay(d, now);
+
+    if (filterMode === '7days') {
+      const seven = new Date(now);
+      seven.setDate(seven.getDate() - 7);
+      return d >= seven && d <= now;
+    }
+
+    if (filterMode === 'thisWeek') {
+      const start = startOfWeek(now);
+      return d >= start && d <= now;
+    }
+
+    if (filterMode === 'thisMonth') {
+      const start = startOfMonth(now);
+      return d >= start && d <= now;
+    }
+
+    return true;
+  });
+
+  // Sort
+  if (sortMode === 'profit') {
+    list.sort((a,b)=> (Number(b.nettoProfit)||0) - (Number(a.nettoProfit)||0));
+  } else {
+    // date
+    list.sort((a,b)=> new Date(b.sellDate) - new Date(a.sellDate));
+  }
+
+  return list;
+}
+
+function renderHistory() {
+  const tbody = document.querySelector('#historyTable tbody');
+  const list = getFilteredHistory();
+
+  tbody.innerHTML = '';
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="muted">Keine Trades in der Historie (mit aktuellem Filter).</td></tr>`;
+    return;
+  }
+
+  list.forEach(trade => {
+    const p = Number(trade.nettoProfit)||0;
+    const profitClass = p >= 0 ? 'profit-pos' : 'profit-neg';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${trade.spieler}</b></td>
+      <td>${formatCoins(trade.kaufpreis)}</td>
+      <td>${formatDateTime(trade.kaufDatum)}</td>
+      <td>${formatCoins(trade.sellPrice)}</td>
+      <td>${formatDateTime(trade.sellDate)}</td>
+      <td class="${profitClass}">${formatCoins(p)}</td>
+      <td><span class="badge">${trade.kategorie}</span></td>
+      <td>${trade.notiz || ''}</td>
+      <td>
+        <button class="secondary small" onclick="reopenTrade('${trade.id}')">Reopen</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterHistory(mode) {
+  filterMode = mode;
+  renderHistory();
+  renderStats();
+}
+
+function sortHistory(mode) {
+  sortMode = mode;
+  renderHistory();
+}
+
+function updateHistory() {
+  renderHistory();
+}
+
+/* =========================
+   Trade Modal (Buy)
+========================= */
+function showTradeModal() {
+  document.getElementById('tradeFormTitle').textContent='Trade hinzufügen';
+  document.getElementById('playerName').value='';
+  document.getElementById('buyPrice').value='';
+  document.getElementById('buyDate').value=new Date().toISOString().slice(0,16);
+  document.getElementById('category').value='ÜV';
+  document.getElementById('note').value='';
+  currentTradeId=null;
+  document.getElementById('overlay').style.display='flex';
+}
+
+function closeTradeModal() {
+  document.getElementById('overlay').style.display='none';
+}
+
+function saveTrade() {
+  const player = document.getElementById('playerName').value.trim();
+  const buyPrice = parseFloat(document.getElementById('buyPrice').value);
+  const buyDatum = document.getElementById('buyDate').value;
+  const kat = document.getElementById('category').value;
+  const notiz = document.getElementById('note').value;
+
+  if (!player || isNaN(buyPrice) || !buyDatum) {
+    alert('Bitte Spieler, Kaufpreis und Kaufdatum ausfüllen.');
+    return;
+  }
+
+  if (currentTradeId) {
+    const idx = trades.offene.findIndex(t => t.id === currentTradeId);
+    if (idx >= 0) {
+      trades.offene[idx] = {
+        ...trades.offene[idx],
+        spieler: player,
+        kaufpreis: buyPrice,
+        kaufDatum: buyDatum,
+        kategorie: kat,
+        notiz: notiz
+      };
+    }
+  } else {
+    trades.offene.push({
+      id: uid(),
+      spieler: player,
+      kaufpreis: buyPrice,
+      kaufDatum: buyDatum,
+      kategorie: kat,
+      notiz: notiz
+    });
+  }
+
+  saveData();
+  closeTradeModal();
+  renderAll();
+}
+
+function editTrade(id) {
+  const t = trades.offene.find(tr => tr.id===id);
+  if (!t) return;
+
+  document.getElementById('playerName').value = t.spieler;
+  document.getElementById('buyPrice').value = t.kaufpreis;
+  document.getElementById('buyDate').value = t.kaufDatum;
+  document.getElementById('category').value = t.kategorie;
+  document.getElementById('note').value = t.notiz || '';
+  currentTradeId = t.id;
+
+  document.getElementById('tradeFormTitle').textContent='Trade bearbeiten';
+  document.getElementById('overlay').style.display='flex';
+}
+
+function deleteTrade(id) {
+  if (!confirm('Trade wirklich löschen?')) return;
+  trades.offene = trades.offene.filter(t => t.id !== id);
+  saveData();
+  renderAll();
+}
+
+/* =========================
+   Sell Modal
+========================= */
+function showSellModal(tradeId) {
+  currentSellTradeId = tradeId;
+  document.getElementById('sellPrice').value='';
+  document.getElementById('sellDate').value=new Date().toISOString().slice(0,16);
+  document.getElementById('sellOverlay').style.display='flex';
+  updateSellCalc();
+}
+
+function closeSellModal() {
+  document.getElementById('sellOverlay').style.display='none';
+  currentSellTradeId = null;
+}
+
+function updateSellCalc() {
+  const trade = trades.offene.find(t => t.id === currentSellTradeId);
+  const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+
+  if (!trade || isNaN(sellPrice)) {
+    document.getElementById('bruttoProfit').textContent = formatCoins(0);
+    document.getElementById('eaTax').textContent = formatCoins(0);
+    document.getElementById('nettoProfit').textContent = formatCoins(0);
+    document.getElementById('nettoProfit').className = "profit-pos";
+    return;
+  }
+
+  const buyPrice = Number(trade.kaufpreis)||0;
+  const brutto = sellPrice - buyPrice;
+  const eaTax = sellPrice * 0.05; // EA tax ist 5% vom Verkaufspreis
+  const netto = brutto - eaTax;
+
+  document.getElementById('bruttoProfit').textContent = formatCoins(brutto);
+  document.getElementById('eaTax').textContent = formatCoins(eaTax);
+
+  const netEl = document.getElementById('nettoProfit');
+  netEl.textContent = formatCoins(netto);
+  netEl.className = netto >= 0 ? "profit-pos" : "profit-neg";
+}
+
+function confirmSell() {
+  const trade = trades.offene.find(t => t.id === currentSellTradeId);
+  const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+  const sellDate = document.getElementById('sellDate').value;
+
+  if (!trade || isNaN(sellPrice) || !sellDate) {
+    alert('Bitte Verkaufspreis und Verkaufsdatum ausfüllen.');
+    return;
+  }
+
+  const buyPrice = Number(trade.kaufpreis)||0;
+  const brutto = sellPrice - buyPrice;
+  const eaTax = sellPrice * 0.05;
+  const netto = brutto - eaTax;
+
+  const abgeschlossen = {
+    ...trade,
+    sellPrice,
+    sellDate,
+    bruttoProfit: brutto,
+    eaTax,
+    nettoProfit: netto
+  };
+
+  trades.offene = trades.offene.filter(t => t.id !== trade.id);
+  trades.abgeschlossen.push(abgeschlossen);
+
+  saveData();
+  closeSellModal();
+  renderAll();
+}
+
+/* =========================
+   Reopen
+========================= */
+function reopenTrade(id) {
+  const t = trades.abgeschlossen.find(x => x.id === id);
+  if (!t) return;
+  if (!confirm("Trade wirklich wieder öffnen?")) return;
+
+  trades.abgeschlossen = trades.abgeschlossen.filter(x => x.id !== id);
+
+  const offen = { ...t };
+  delete offen.sellPrice;
+  delete offen.sellDate;
+  delete offen.bruttoProfit;
+  delete offen.eaTax;
+  delete offen.nettoProfit;
+
+  trades.offene.push(offen);
+
+  saveData();
+  renderAll();
+}
+
+/* =========================
+   Import / Export
+========================= */
+function exportData() {
+  const dataStr = JSON.stringify(trades, null, 2);
+  const blob = new Blob([dataStr], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'uev_trades_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.offene) || !Array.isArray(data.abgeschlossen)) {
+        alert('Ungültige Datei (falsches Format).');
+        return;
+      }
+      trades = data;
+      saveData();
+      renderAll();
+      alert("Backup importiert!");
+    } catch (err) {
+      alert('Fehler beim Import.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* =========================
+   Tabs
+========================= */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    if (tab.id === 'tabPortfolio') {
+      document.getElementById('sectionPortfolio').classList.add('active');
+    } else {
+      document.getElementById('sectionHistory').classList.add('active');
+    }
+  };
+});
+
+/* =========================
+   Global Render
+========================= */
+function renderAll() {
+  renderStats();
+  renderOpenTrades();
+  renderHistory();
+}
+
+/* =========================
+   Init
+========================= */
+window.onload = () => {
+  loadData();
+  renderAll();
+};
+
+// ESC schließt Modals
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeTradeModal();
+    closeSellModal();
+  }
+});
+</script>
+
+</body>
+</html>
