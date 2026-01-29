@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>UEV Trading Tracker</title>
 
+<!-- Dein CSS -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
 
 <style>
@@ -382,7 +383,7 @@
 <div class="section active" id="sectionPortfolio">
   <div class="toolbar">
     <button class="primary" onclick="showTradeModal()">Add Buy</button>
-    <button class="secondary" onclick="exportData()">Export Backup</button>
+    <button class="secondary" onclick="exportData()">Backup</button>
     <button class="secondary" onclick="document.getElementById('importFile').click()">Import Backup</button>
     <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
     <button class="danger" onclick="resetAll()">Delete All</button>
@@ -465,12 +466,10 @@
       <div class="lb-title">Avg Sell Duration (fastest players)</div>
       <div id="lbDuration"></div>
     </div>
-
     <div class="lb-card">
       <div class="lb-title">Most Sold Players</div>
       <div id="lbMostSold"></div>
     </div>
-
     <div class="lb-card">
       <div class="lb-title">Most Profitable Players</div>
       <div id="lbMostProfit"></div>
@@ -478,16 +477,14 @@
   </div>
 </div>
 
-<!-- Buy Modal -->
+<!-- Modal für Kauf -->
 <div id="overlay">
   <div class="modal" id="tradeModal">
     <h3 id="tradeFormTitle">Add Trade</h3>
-
     <div>
       <label>Player name:</label>
       <input type="text" id="playerName" placeholder="e.g. Mbappé"/>
     </div>
-
     <div class="row">
       <div>
         <label>Buy price:</label>
@@ -498,12 +495,10 @@
         <input type="datetime-local" id="buyDate"/>
       </div>
     </div>
-
     <div>
       <label>Note:</label>
       <input type="text" id="note" placeholder="optional"/>
     </div>
-
     <div class="modal-footer">
       <button class="primary" onclick="saveTrade()">Save</button>
       <button class="secondary" onclick="closeTradeModal()">Cancel</button>
@@ -511,11 +506,10 @@
   </div>
 </div>
 
-<!-- Sell Modal -->
+<!-- Modal für Verkauf -->
 <div id="sellOverlay">
   <div class="modal" id="sellModal">
     <h3>Complete Sale</h3>
-
     <div class="row">
       <div>
         <label>Sell price:</label>
@@ -526,13 +520,11 @@
         <input type="datetime-local" id="sellDate" onchange="updateSellCalc()"/>
       </div>
     </div>
-
     <div id="profitDisplay">
       <div><span>Gross profit:</span> <span id="bruttoProfit">0</span></div>
       <div><span>EA tax (5%):</span> <span id="eaTax">0</span></div>
       <div><strong>Net profit:</strong> <span id="nettoProfit" class="profit-pos">0</span></div>
     </div>
-
     <div class="modal-footer">
       <button class="primary" onclick="confirmSell()">Sell</button>
       <button class="secondary" onclick="closeSellModal()">Cancel</button>
@@ -547,7 +539,7 @@
 
 <script>
 /* =========================
-   Data & Storage
+   Daten & Speicherung
 ========================= */
 const STORAGE_KEY = "uev_trading_tracker_v2";
 
@@ -561,6 +553,13 @@ let sortMode = 'date';
 let openSort = { key: 'buyDate', dir: 'desc' };
 
 let leaderboardRange = 'all';
+
+// Neue Funktion: Local ISO Zeit ohne Z
+function nowLocalISO() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
@@ -587,7 +586,7 @@ function resetAll() {
 }
 
 /* =========================
-   Helpers
+   Hilfsfunktionen
 ========================= */
 function uid() {
   return (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random());
@@ -599,6 +598,7 @@ function formatCoins(value) {
   return Math.round(v).toLocaleString("en-US");
 }
 
+// Diese Funktion nutzt die lokale Zeitzone
 function formatDateTime(value) {
   if (!value) return "";
   try {
@@ -627,8 +627,8 @@ function isSameDay(a, b) {
 
 function startOfWeek(date) {
   const d = new Date(date);
-  const day = d.getDay(); // 0 sunday
-  const diff = (day === 0 ? -6 : 1 - day); // monday start
+  const day = d.getDay(); // 0 Sonntag
+  const diff = (day === 0 ? -6 : 1 - day); // Wochenstart Montag
   d.setDate(d.getDate() + diff);
   d.setHours(0,0,0,0);
   return d;
@@ -646,10 +646,11 @@ function daysBetween(a, b) {
   return ms / (1000 * 60 * 60 * 24);
 }
 
+// Safe Dauer-Berechnung
 function durationMs(trade) {
   const buy = new Date(trade.kaufDatum);
   const sell = new Date(trade.sellDate);
-  if (isNaN(buy.getTime()) || isNaN(sell.getTime())) return null;
+  if (isNaN(buy) || isNaN(sell) || sell < buy) return null;
   return sell - buy;
 }
 
@@ -693,7 +694,6 @@ function computeMostSoldPlayer(list) {
 }
 
 function computeFastestSeller(list) {
-  // avg duration by player
   const map = {};
   list.forEach(t => {
     const ms = durationMs(t);
@@ -741,7 +741,6 @@ function computeThisWeekProfit() {
 }
 
 function computeDailyAverageProfit() {
-  // average profit per day based on days with at least 1 closed trade
   const map = {};
   trades.abgeschlossen.forEach(t => {
     const d = new Date(t.sellDate);
@@ -756,7 +755,6 @@ function computeDailyAverageProfit() {
 }
 
 function computeWeeklyAverageProfit() {
-  // average profit per week (weeks with at least 1 closed trade)
   const map = {};
   trades.abgeschlossen.forEach(t => {
     const d = new Date(t.sellDate);
@@ -799,43 +797,36 @@ function renderStats() {
       <div class="kpi-label">Open trades</div>
       <div class="kpi-sub">Bound coins: <b>${formatCoins(boundValue)}</b></div>
     </div>
-
     <div class="kpi-card">
       <div class="kpi-number">${closedCount}</div>
       <div class="kpi-label">Closed trades</div>
       <div class="kpi-sub">Avg / trade: <b>${formatCoins(avgProfit)}</b></div>
     </div>
-
     <div class="kpi-card">
       <div class="kpi-number ${totalProfit>=0?'profit-pos':'profit-neg'}">${formatCoins(totalProfit)}</div>
       <div class="kpi-label">Total net profit</div>
       <div class="kpi-sub">Daily avg: <b>${formatCoins(dailyAvg)}</b></div>
     </div>
-
     <div class="kpi-card">
       <div class="kpi-number ${todayProfit>=0?'profit-pos':'profit-neg'}">${formatCoins(todayProfit)}</div>
       <div class="kpi-label">Profit today</div>
       <div class="kpi-sub">Daily avg: <b>${formatCoins(dailyAvg)}</b></div>
     </div>
-
     <div class="kpi-card">
       <div class="kpi-number ${thisWeekProfit>=0?'profit-pos':'profit-neg'}">${formatCoins(thisWeekProfit)}</div>
       <div class="kpi-label">Profit this week</div>
       <div class="kpi-sub">Weekly avg: <b>${formatCoins(weeklyAvg)}</b></div>
     </div>
-
     <div class="kpi-card">
       <div class="kpi-number">${mostSold ? mostSold.count : "—"}</div>
       <div class="kpi-label">Most sold player</div>
       <div class="kpi-sub">${mostSold ? `<b>${mostSold.name}</b>` : "No data"}</div>
     </div>
-
     <div class="kpi-card">
       <div class="kpi-number">${oldestOpen ? Math.floor(daysBetween(new Date(oldestOpen.kaufDatum), new Date())) + "d" : "—"}</div>
       <div class="kpi-label">Oldest open trade</div>
       <div class="kpi-sub">${oldestOpen ? `<b>${oldestOpen.spieler}</b>` : "No open trades"}</div>
     </div>
-
     <div class="kpi-card">
       <div class="kpi-number">${fastest ? Math.max(0, Math.round(fastest.avgMs / (1000*60*60))) + "h" : "—"}</div>
       <div class="kpi-label">Fastest selling (avg)</div>
@@ -845,7 +836,7 @@ function renderStats() {
 }
 
 /* =========================
-   Open Trades (sortable)
+   Open Trades sortieren
 ========================= */
 function setOpenSort(key) {
   if (openSort.key === key) {
@@ -859,15 +850,13 @@ function setOpenSort(key) {
 
 function sortOpen(list) {
   const dir = openSort.dir === 'asc' ? 1 : -1;
-
-  return list.sort((a,b) => {
+  return [...list].sort((a,b) => {
     if (openSort.key === 'player') {
       return normalize(a.spieler).localeCompare(normalize(b.spieler)) * dir;
     }
     if (openSort.key === 'buyPrice') {
       return ((Number(a.kaufpreis)||0) - (Number(b.kaufpreis)||0)) * dir;
     }
-    // buyDate
     return (new Date(a.kaufDatum) - new Date(b.kaufDatum)) * dir;
   });
 }
@@ -875,10 +864,8 @@ function sortOpen(list) {
 function renderOpenTrades() {
   const tbody = document.querySelector('#openTradesTable tbody');
   const q = document.getElementById("searchOpen").value;
-
   let list = trades.offene.filter(t => includesAny(t, q));
   list = sortOpen(list);
-
   tbody.innerHTML = '';
 
   if (list.length === 0) {
@@ -888,7 +875,6 @@ function renderOpenTrades() {
 
   list.forEach(trade => {
     const tr = document.createElement('tr');
-
     tr.innerHTML = `
       <td><b>${trade.spieler}</b></td>
       <td>${formatCoins(trade.kaufpreis)}</td>
@@ -900,18 +886,16 @@ function renderOpenTrades() {
         <button class="danger small" onclick="deleteTrade('${trade.id}')">Delete</button>
       </td>
     `;
-
     tbody.appendChild(tr);
   });
 }
 
 /* =========================
-   History Filter/Sort/Search
+   Filter/Sort/Search in der Historie
 ========================= */
 function getFilteredHistory() {
   const q = document.getElementById("searchHistory").value;
   let list = trades.abgeschlossen.filter(t => includesAny(t, q));
-
   const now = new Date();
 
   list = list.filter(t => {
@@ -920,29 +904,24 @@ function getFilteredHistory() {
 
     if (filterMode === 'all') return true;
     if (filterMode === 'today') return isSameDay(d, now);
-
     if (filterMode === '7days') {
       const start = new Date(now);
       start.setDate(start.getDate() - 7);
       return d >= start && d <= now;
     }
-
     if (filterMode === '30days') {
       const start = new Date(now);
       start.setDate(start.getDate() - 30);
       return d >= start && d <= now;
     }
-
     if (filterMode === 'thisWeek') {
       const start = startOfWeek(now);
       return d >= start && d <= now;
     }
-
     if (filterMode === 'thisMonth') {
       const start = startOfMonth(now);
       return d >= start && d <= now;
     }
-
     return true;
   });
 
@@ -999,10 +978,6 @@ function sortHistory(mode) {
   renderHistory();
 }
 
-function updateHistory() {
-  renderHistory();
-}
-
 /* =========================
    Leaderboard
 ========================= */
@@ -1025,25 +1000,21 @@ function renderLeaderboard() {
   const list = trades.abgeschlossen.filter(t => inRangeBySellDate(t, leaderboardRange));
   const byPlayer = groupByPlayer(list);
 
-  // Avg duration
   const durationArr = Object.keys(byPlayer).map(name => {
     const tradesList = byPlayer[name];
     const durations = tradesList
       .map(t => durationMs(t))
       .filter(ms => ms !== null && ms >= 0);
-
     if (!durations.length) return null;
     const avg = durations.reduce((a,b)=>a+b,0) / durations.length;
     return { name, avgMs: avg, n: durations.length };
   }).filter(Boolean).sort((a,b)=> a.avgMs - b.avgMs).slice(0, 10);
 
-  // Most sold
   const mostSoldArr = Object.keys(byPlayer).map(name => ({
     name,
     count: byPlayer[name].length
   })).sort((a,b)=> b.count - a.count).slice(0, 10);
 
-  // Most profit
   const mostProfitArr = Object.keys(byPlayer).map(name => ({
     name,
     profit: byPlayer[name].reduce((s,t)=> s + (Number(t.nettoProfit)||0), 0),
@@ -1083,7 +1054,8 @@ function showTradeModal() {
   document.getElementById('tradeFormTitle').textContent='Add Trade';
   document.getElementById('playerName').value='';
   document.getElementById('buyPrice').value='';
-  document.getElementById('buyDate').value=new Date().toISOString().slice(0,16);
+  // Datum in lokaler ISO Zeit
+  document.getElementById('buyDate').value = nowLocalISO();
   document.getElementById('note').value='';
   currentTradeId=null;
   document.getElementById('overlay').style.display='flex';
@@ -1096,7 +1068,7 @@ function closeTradeModal() {
 function saveTrade() {
   const player = document.getElementById('playerName').value.trim();
   const buyPrice = parseFloat(document.getElementById('buyPrice').value);
-  const buyDatum = document.getElementById('buyDate').value;
+  const buyDatum = document.getElementById('buyDate').value; // ISO in lokaler Zeitzone
   const notiz = document.getElementById('note').value;
 
   if (!player || isNaN(buyPrice) || !buyDatum) {
@@ -1136,6 +1108,7 @@ function editTrade(id) {
 
   document.getElementById('playerName').value = t.spieler;
   document.getElementById('buyPrice').value = t.kaufpreis;
+  // Datum in ISO in lokaler Zeitzone
   document.getElementById('buyDate').value = t.kaufDatum;
   document.getElementById('note').value = t.notiz || '';
   currentTradeId = t.id;
@@ -1157,7 +1130,8 @@ function deleteTrade(id) {
 function showSellModal(tradeId) {
   currentSellTradeId = tradeId;
   document.getElementById('sellPrice').value='';
-  document.getElementById('sellDate').value=new Date().toISOString().slice(0,16);
+  // Datum in lokaler ISO Zeit
+  document.getElementById('sellDate').value=nowLocalISO();
   document.getElementById('sellOverlay').style.display='flex';
   updateSellCalc();
 }
@@ -1195,7 +1169,7 @@ function updateSellCalc() {
 function confirmSell() {
   const trade = trades.offene.find(t => t.id === currentSellTradeId);
   const sellPrice = parseFloat(document.getElementById('sellPrice').value);
-  const sellDate = document.getElementById('sellDate').value;
+  const sellDate = document.getElementById('sellDate').value; // ISO in lokaler Zeitzone
 
   if (!trade || isNaN(sellPrice) || !sellDate) {
     alert('Please fill sell price and sell date.');
@@ -1304,7 +1278,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 /* =========================
-   Global Render
+   Gesamtes Rendern
 ========================= */
 function renderAll() {
   renderStats();
@@ -1314,14 +1288,14 @@ function renderAll() {
 }
 
 /* =========================
-   Init
+   Initialisierung
 ========================= */
 window.onload = () => {
   loadData();
   renderAll();
 };
 
-// ESC closes modals
+// ESC zum Schließen der Modale
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeTradeModal();
@@ -1332,4 +1306,3 @@ document.addEventListener("keydown", (e) => {
 
 </body>
 </html>
-
