@@ -188,7 +188,7 @@
     margin-top: 0.7em;
     display:flex;
     gap: 0.7em;
-    flex-wrap: wrap;
+    flex-wrap:wrap;
     align-items:center;
   }
   .search-row > div {
@@ -798,7 +798,6 @@ function computeWeeklyAverageProfit() {
 /* =========================
    NEU: Zusätzliche KPI Funktionen
 ========================= */
-
 // Format: 2d 4h oder 5h (wenn < 1 Tag)
 function formatHoldTime(ms) {
   const v = Number(ms);
@@ -840,6 +839,35 @@ function computeAvgSalesPerDay() {
   return totalSales / days;
 }
 
+// Neue Funktion: Berechnet den besten durchschnittlichen ROI pro Spieler
+function computeBestAvgROI(list) {
+  const map = {};
+
+  list.forEach(t => {
+    const buy = Number(t.kaufpreis) || 0;
+    const profit = Number(t.nettoProfit) || 0;
+    if (buy <= 0) return;
+
+    const roi = profit / buy;
+    const name = t.spieler || "Unknown";
+
+    if (!map[name]) map[name] = { total: 0, n: 0 };
+    map[name].total += roi;
+    map[name].n += 1;
+  });
+
+  let best = null;
+  Object.keys(map).forEach(name => {
+    const avg = map[name].total / map[name].n;
+    if (!best || avg > best.avg) {
+      best = { name, avg, n: map[name].n };
+    }
+  });
+
+  return best;
+}
+
+// Aktualisierte renderStats() Funktion mit neuem ROI
 function renderStats() {
   const offene = trades.offene;
   const abgeschlossen = trades.abgeschlossen;
@@ -860,7 +888,7 @@ function renderStats() {
 
   const mostSold = computeMostSoldPlayer(abgeschlossen);
   const oldestOpen = computeOldestOpenTrade(offene);
-  const fastest = computeFastestSeller(abgeschlossen);
+  const bestROI = computeBestAvgROI(abgeschlossen); // Hier die neue Funktion
 
   /* =========================
      NEU: KPI Werte
@@ -908,9 +936,11 @@ function renderStats() {
       <div class="kpi-sub">${oldestOpen ? `<b>${oldestOpen.spieler}</b>` : "No open trades"}</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-number">${fastest ? Math.max(0, Math.round(fastest.avgMs / (1000*60*60))) + "h" : "—"}</div>
-      <div class="kpi-label">Fastest selling (avg)</div>
-      <div class="kpi-sub">${fastest ? `<b>${fastest.name}</b> (${fastest.n} sales)` : "No data"}</div>
+      <div class="kpi-number">${bestROI ? (bestROI.avg * 100).toFixed(2) + "%" : "—"}</div>
+      <div class="kpi-label">Best avg ROI</div>
+      <div class="kpi-sub">
+        ${bestROI ? `<b>${bestROI.name}</b> (${bestROI.n} trades)` : "No data"}
+      </div>
     </div>
 
     <!-- NEU: Avg hold time -->
@@ -1400,4 +1430,3 @@ document.addEventListener("keydown", (e) => {
 
 </body>
 </html>
-
