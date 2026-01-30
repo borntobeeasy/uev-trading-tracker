@@ -363,82 +363,30 @@
   .lb-row:last-child { border-bottom: none; }
   .lb-row b { color: var(--accent-primary); }
   /* ================================
-   FIX: Date Input overflow (iPad/Handy)
+   FIX: iOS DateTime overflow (iPad / iPhone)
    ================================ */
 
-/* Form im Popup/Modal responsive machen */
-.modal form,
-.popup form,
-#tradeModal form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-/* Falls du Form-Rows nutzt */
-.modal form .form-row,
-.popup form .form-row,
-#tradeModal form .form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-}
-
-/* Inputs dürfen nicht überlaufen */
-.modal input,
-.popup input,
-#tradeModal input,
-.modal select,
-.popup select,
-#tradeModal select {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* iOS Date-Inputs sind oft zu breit */
-input[type="date"] {
-  min-width: 140px;
-}
-
-/* Mobile Layout: alles untereinander */
-@media (max-width: 768px) {
-  .modal form,
-  .popup form,
-  #tradeModal form {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .modal form .form-row,
-  .popup form .form-row,
-  #tradeModal form .form-row {
-    flex-direction: column;
-  }
-
-  input[type="date"],
-  input[type="number"],
-  input[type="text"],
-  select {
-    width: 100% !important;
-  }
-}
-
-/* Falls du eine Zeile hast wo mehrere Inputs nebeneinander sind */
-.trade-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.trade-row > * {
-  flex: 1 1 160px;
+/* Wichtig: Grid-Children dürfen schrumpfen */
+.modal .row > div {
   min-width: 0;
 }
 
-.trade-row input[type="date"] {
-  flex: 1 1 180px;
+/* DateTime Inputs zwingen sich ans Modal */
+input[type="datetime-local"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  -webkit-appearance: none;
 }
+
+/* iOS-only Stabilisierung (verhindert Zoom + Überlauf) */
+@supports (-webkit-touch-callout: none) {
+  input[type="datetime-local"] {
+    font-size: 16px;
+  }
+}
+
 
 </style>
 </head>
@@ -1452,3 +1400,4 @@ document.addEventListener("keydown", (e) => {
 
 </body>
 </html>
+
