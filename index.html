@@ -769,6 +769,51 @@ function computeWeeklyAverageProfit() {
   return total / keys.length;
 }
 
+/* =========================
+   NEU: Zusätzliche KPI Funktionen
+========================= */
+
+// Format: 2d 4h oder 5h (wenn < 1 Tag)
+function formatHoldTime(ms) {
+  const v = Number(ms);
+  if (!isFinite(v) || v <= 0) return "—";
+  const totalHours = Math.floor(v / (1000 * 60 * 60));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+
+  if (days <= 0) return `${totalHours}h`;
+  if (hours <= 0) return `${days}d`;
+  return `${days}d ${hours}h`;
+}
+
+function computeAvgHoldTimeMs() {
+  const list = trades.abgeschlossen || [];
+  if (!list.length) return null;
+
+  const durations = list
+    .map(t => durationMs(t))
+    .filter(ms => ms !== null && ms >= 0);
+
+  if (!durations.length) return null;
+
+  const total = durations.reduce((a,b)=> a+b, 0);
+  return total / durations.length;
+}
+
+function computeAvgSalesPerDay() {
+  const map = {};
+  (trades.abgeschlossen || []).forEach(t => {
+    const d = new Date(t.sellDate);
+    if (isNaN(d.getTime())) return;
+    const key = d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+    map[key] = (map[key] || 0) + 1;
+  });
+  const days = Object.keys(map).length;
+  if (!days) return 0;
+  const totalSales = Object.values(map).reduce((s,n)=> s + n, 0);
+  return totalSales / days;
+}
+
 function renderStats() {
   const offene = trades.offene;
   const abgeschlossen = trades.abgeschlossen;
@@ -790,6 +835,15 @@ function renderStats() {
   const mostSold = computeMostSoldPlayer(abgeschlossen);
   const oldestOpen = computeOldestOpenTrade(offene);
   const fastest = computeFastestSeller(abgeschlossen);
+
+  /* =========================
+     NEU: KPI Werte
+  ========================= */
+  const avgHoldMs = computeAvgHoldTimeMs();
+  const avgHoldText = avgHoldMs === null ? "—" : formatHoldTime(avgHoldMs);
+
+  const avgSalesDay = computeAvgSalesPerDay();
+  const avgSalesWeek = avgSalesDay * 7;
 
   document.querySelector('#statsContainer').innerHTML = `
     <div class="kpi-card">
@@ -831,6 +885,20 @@ function renderStats() {
       <div class="kpi-number">${fastest ? Math.max(0, Math.round(fastest.avgMs / (1000*60*60))) + "h" : "—"}</div>
       <div class="kpi-label">Fastest selling (avg)</div>
       <div class="kpi-sub">${fastest ? `<b>${fastest.name}</b> (${fastest.n} sales)` : "No data"}</div>
+    </div>
+
+    <!-- NEU: Avg hold time -->
+    <div class="kpi-card">
+      <div class="kpi-number">${avgHoldText}</div>
+      <div class="kpi-label">Avg hold time</div>
+      <div class="kpi-sub">Sell Date - Buy Date</div>
+    </div>
+
+    <!-- NEU: Avg sales / day -->
+    <div class="kpi-card">
+      <div class="kpi-number">${avgSalesDay ? avgSalesDay.toFixed(2) : "0.00"}</div>
+      <div class="kpi-label">Avg sales / day</div>
+      <div class="kpi-sub">Avg / week: <b>${avgSalesWeek.toFixed(2)}</b></div>
     </div>
   `;
 }
@@ -1306,4 +1374,3 @@ document.addEventListener("keydown", (e) => {
 
 </body>
 </html>
-
